@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportar Incidente | DIF La Griega</title>
+
+    <!-- Bootstrap 5 -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <style>
+        :root {
+            --rosa-dif: #e93c84;
+            --azul-dif: #0073b1;
+            --azul-claro: #4ac4e0;
+            --amarillo-dif: #f5a623;
+            --fondo-claro: #f7f8fa;
+            --blanco: #ffffff;
+        }
+
+        body {
+            background-color: var(--fondo-claro);
+            font-family: "Poppins", "Segoe UI", sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(90deg, var(--azul-dif), var(--azul-claro));
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+        }
+
+        .navbar img {
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .container-form {
+            max-width: 800px;
+            margin: 70px auto;
+            padding: 40px 35px;
+            border-radius: 18px;
+            background-color: var(--blanco);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border-top: 6px solid var(--rosa-dif);
+        }
+
+        h1 {
+            color: var(--azul-dif);
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--azul-dif);
+        }
+
+        .btn-primary {
+            background-color: var(--rosa-dif);
+            border: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--azul-claro);
+        }
+
+        .form-select, .form-control {
+            border-radius: 10px;
+            border: 1px solid #ced4da;
+            padding: 10px;
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: var(--rosa-dif);
+            box-shadow: 0 0 0 0.25rem rgba(233, 60, 132, 0.25);
+        }
+
+        #consejo_contenedor {
+            border: 1px solid var(--azul-claro);
+            background-color: #e6f7fb;
+            color: #004b63;
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .logout-link {
+            text-decoration: none;
+            color: var(--rosa-dif);
+            font-weight: 600;
+        }
+
+        .logout-link:hover {
+            color: var(--azul-dif);
+        }
+
+        .alert {
+            border-radius: 10px;
+        }
+
+        hr {
+            border: 2px solid var(--amarillo-dif);
+            width: 50%;
+            margin: 25px auto;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- NAVBAR DIF -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="{{ url_for('static', filename='img/dif_logo.png') }}" alt="DIF Logo">
+                DIF La Griega - Área de Soporte Técnico
+            </a>
+            <div class="d-flex">
+                <a href="{{ url_for('logout') }}" class="btn btn-light btn-sm fw-bold">Cerrar Sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- FORMULARIO -->
+    <div class="container-form fade-in">
+        <h1>Reportar un Incidente (Cliente)</h1>
+        <hr>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-success text-center">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('reportar_incidente') }}" onsubmit="return validarFormulario();">
+            <div class="mb-3">
+                <label for="id_activo" class="form-label">Máquina Afectada (Solo tus equipos):</label>
+                <select id="id_activo" name="id_activo" class="form-select" required>
+                    {% for activo in activos %}
+                        <option value="{{ activo.id_activo }}">
+                            {{ activo.tipo_activo }} (N/S: {{ activo.serial_number }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="categoria_problema" class="form-label">Problema:</label>
+                <select id="categoria_problema" class="form-select" onchange="mostrarSubproblemas()" required>
+                    <option value="">-- Seleccione Categoría --</option>
+                    {% for categoria in problemas_comunes %}
+                        <option value="{{ categoria }}">{{ categoria }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="subproblema_contenedor" class="mb-3" style="display: none;">
+                <label for="subproblema" class="form-label">Detalle del Problema:</label>
+                <select id="subproblema" class="form-select" onchange="mostrarOtroProblema()" required></select>
+            </div>
+
+            <div id="otro_problema_contenedor" class="mb-3" style="display: none;">
+                <label for="descripcion_otro" class="form-label">Describa brevemente el problema:</label>
+                <input type="text" id="descripcion_otro" class="form-control">
+            </div>
+
+            <input type="hidden" id="asunto_final" name="asunto" required>
+
+            <div id="consejo_contenedor" class="mb-4" style="display: none;">
+                <strong>💡 Consejo rápido:</strong>
+                <p id="consejo_texto" class="mb-1"></p>
+                <p><strong>Si no funciona, presione “Enviar Solicitud”.</strong></p>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" id="btn_enviar" class="btn btn-primary" disabled>Enviar Solicitud</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const PROBLEMAS = {{ problemas_comunes | tojson }};
+        const categoriaSelect = document.getElementById('categoria_problema');
+        const subproblemaSelect = document.getElementById('subproblema');
+        const subproblemaContenedor = document.getElementById('subproblema_contenedor');
+        const otroProblemaContenedor = document.getElementById('otro_problema_contenedor');
+        const descripcionOtro = document.getElementById('descripcion_otro');
+        const asuntoFinal = document.getElementById('asunto_final');
+        const consejoContenedor = document.getElementById('consejo_contenedor');
+        const consejoTexto = document.getElementById('consejo_texto');
+        const btnEnviar = document.getElementById('btn_enviar');
+
+        function mostrarSubproblemas() {
+            const categoria = categoriaSelect.value;
+            subproblemaSelect.innerHTML = '<option value="">-- Seleccione Detalle --</option>';
+            subproblemaContenedor.style.display = 'none';
+            otroProblemaContenedor.style.display = 'none';
+            consejoContenedor.style.display = 'none';
+            descripcionOtro.required = false;
+            btnEnviar.disabled = true;
+
+            if (categoria && PROBLEMAS[categoria]) {
+                const opciones = PROBLEMAS[categoria].opciones;
+                opciones.forEach(opcion => {
+                    const option = document.createElement('option');
+                    option.value = opcion;
+                    option.textContent = opcion;
+                    subproblemaSelect.appendChild(option);
+                });
+                subproblemaContenedor.style.display = 'block';
+                consejoTexto.textContent = PROBLEMAS[categoria].consejo;
+                consejoContenedor.style.display = 'block';
+            }
+        }
+
+        function mostrarOtroProblema() {
+            const subproblema = subproblemaSelect.value;
+            otroProblemaContenedor.style.display = 'none';
+            descripcionOtro.required = false;
+            btnEnviar.disabled = true;
+
+            if (subproblema === 'Otra') {
+                otroProblemaContenedor.style.display = 'block';
+                descripcionOtro.required = true;
+                btnEnviar.disabled = false;
+                asuntoFinal.value = '';
+            } else if (subproblema && subproblema !== 'Otra') {
+                btnEnviar.disabled = false;
+                asuntoFinal.value = subproblema + ' (' + categoriaSelect.value + ')';
+            }
+        }
+
+        function validarFormulario() {
+            const categoria = categoriaSelect.value;
+            const subproblema = subproblemaSelect.value;
+            let asunto = "";
+            
+            if (!categoria || !subproblema) {
+                alert('Por favor, complete las categorías del problema.');
+                return false;
+            }
+
+            if (subproblema === 'otro') {
+                const otro = descripcionOtro.value.trim();
+                if (!otro) {
+                    alert('Por favor, describa brevemente su problema.');
+                    return false;
+                }
+                asunto = otro + ' (' + categoria + ')';
+            } else {
+                asunto = subproblema + ' (' + categoria + ')';
+            }
+            
+            asuntoFinal.value = asunto;
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', mostrarSubproblemas);
+    </script>
+</body>
+</html>

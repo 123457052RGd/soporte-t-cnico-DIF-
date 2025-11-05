@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><title>Cerrar Ticket #{{ ticket.id_ticket }}</title></head>
+<body>
+    <h1>Documentar y Cerrar Servicio #{{ ticket.id_ticket }}</h1>
+    
+    <h2>Datos de Referencia (Automático del Ticket):</h2>
+    <ul>
+        <li>**Responsable Solicitante:** {{ ticket.nombre_cliente }} {{ ticket.apellido_cliente }}</li>
+        <li>**Ubicación:** {{ ticket.ubicacion }}</li>
+        <li>**N/S (Serial):** {{ ticket.NS }}</li>
+        <li>**N° Inventario:** {{ ticket.No_Inventario }}</li>
+        <li>**Responsable del Soporte:** {{ ticket.nombre_tecnico }} {{ ticket.apellido_tecnico }}</li>
+    </ul>
+
+    <hr>
+    
+    <h2>Documentación del Evento (Historial)</h2>
+    <form method="POST" action="{{ url_for('cerrar_ticket', id_ticket=ticket.id_ticket) }}">
+        
+        <label for="diagnostico">Diagnóstico (Causa Raíz del Problema):</label><br>
+        <textarea id="diagnostico" name="diagnostico" rows="4" required></textarea><br><br>
+        
+        <label for="solucion_aplicada">Solución Aplicada (Lo que se realizó):</label><br>
+        <textarea id="solucion_aplicada" name="solucion_aplicada" rows="6" required></textarea><br><br>
+        
+        <label for="tiempo_empleado">Tiempo Empleado (Horas - Ej: 0.5):</label>
+        <input type="number" step="0.1" min="0" id="tiempo_empleado" name="tiempo_empleado" required><br><br>
+        
+        <button type="submit">Documentar y Marcar como RESUELTO</button>
+    </form>
+</body>
+</html>
