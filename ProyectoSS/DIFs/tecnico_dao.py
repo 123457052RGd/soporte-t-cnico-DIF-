@@ -1,4 +1,5 @@
 from db_manager import execute_query
+import bcrypt
 
 class TecnicoDAO:
     def autenticar(self, email, password_ingresada):
@@ -19,4 +20,6 @@ class TecnicoDAO:
                 return tecnico_data 
             
         return None
+def verificar_password(password_ingresada, stored_hash):
+    return bcrypt.checkpw(password_ingresada.encode('utf-8'), stored_hash.encode('utf-8'))
 
